@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Web | Todo</title>
+	<link rel="stylesheet" type="text/css" href="./assets/css/bootstrap.css">
+	<link rel="stylesheet" type="text/css" href="./assets/css/bootstrap-datepicker.css">
+	<link rel="stylesheet" type="text/css" href="./assets/css/font-awesome.css">
+	<link rel="stylesheet" type="text/css" href="./assets/css/animate.css">
+	<script type="text/javascript" src="./assets/js/jquery.js"></script>
+	<style type="text/css">
+	.strike {
+		text-decoration: line-through;
+	}
+	.btn-close:before {
+		content: '\00a2'
+	}
+	.btn-close {
+		position: absolute;
+		right: .5rem;
+		top: .5rem;-webkit-appearance: none;
+		background-color: rgba(10,10,10,.2);
+		border: none;
+		border-radius: 290486px;
+		cursor: pointer;
+		pointer-events: auto;
+		display: inline-block;
+		flex-grow: 0;
+		flex-shrink: 0;
+		font-size: 0;
+		height: 20px;
+		max-height: 20px;
+		max-width: 20px;
+		min-height: 20px;
+		min-width: 20px;
+		outline: 0;
+		vertical-align: top;
+		width: 20px;
+	}
+</style>
+</head>
+<body>
+	<nav class="navbar navbar-dark bg-info">
+		<span class="navbar-brand mb-0 h1">Web | Todo</span>
+	</nav>
+	<div id="app" class="container animated bounceIn" style="padding-top: 45px; display: none;">
+		<div class="row">
+			<div class="col col-md-6" style="border-right: 3px solid black;">
+				<form>
+					<div class="form-group">
+						<label>Name </label>
+						<input type="text" v-model="todo.name" ref="name" class="form-control" placeholder="Enter descriptive name">
+					</div>
+					<div class="form-group">
+						<label>Due Date </label>
+						<input type="text" class="form-control" id="dueDate" v-model="todo.due">
+					</div>
+					<div class="form-group">
+						<label>Venue </label>
+						<input type="text" @keyup.enter="createTodo" class="form-control" v-model="todo.venue" placeholder="Enter venue (optional)">
+					</div>
+					<button type="button" class="btn btn-primary btn-block" @click="createTodo">Register Todo</button>
+				</form>
+			</div>
+			<div class="col col-md-6">
+				<div class="card">
+					<div class="card-body" v-if="showing.name">
+						<button class="btn-close" style="" @click="removeShowing">x</button>
+						<h5 class="card-title">{{ showing.name }} 
+							<i class="fa" :class="[showing.done? 'fa-check-circle':'fa-check-circle-o']"></i>
+						</h5>
+						<p class="card-text">@{{ showing.venue }} <code>{{ m(showing.due, 'MMMM Do YYYY').format('dddd') }} | {{ showing.due }}</code> | {{ m(showing.due, 'MMMM Do YYYY').endOf('day').fromNow() }} </p>
+					</div>
+					<ul class="list-group list-group-flush">
+						<transition-group name="custom-trans" :duration="1000" enter-active-class="animated slideInLeft"
+						leave-active-class="animated slideOutRight">
+						<li v-for="todo, index in todos" :key="index" class="list-group-item  d-flex justify-content-between align-items-center">
+							<span :class="[todo.done? 'strike':'not-strike']">
+								<span class="badge badge-info">{{ index + 1 }}.</span> 
+							{{ todo.name | limit(15) }}</span>
+							<span>
+								<button class="btn btn-danger btn-sm" @click="deleteTodo(index)"><i class="fa fa-trash"></i></button>
+								<button class="btn btn-warning btn-sm" @click="editTodo(index)"><i class="fa fa-edit"></i></button>
+								<button class="btn btn-info btn-sm" @click="showTodo(index)"><i class="fa fa-eye"></i></button>
+								<button class="btn btn-success btn-sm" :disabled="todo.done" @click="markDone(index)"><i class="fa fa-check"></i></button>
+							</span>
+						</li>
+					</transition-group>
+				</ul>
+			</div>
+		</div>
+	</div>
+</div>
+<script type="text/javascript" src="./assets/js/bootstrap.js"></script>
+<script type="text/javascript" src="./assets/js/bootstrap-datepicker.js"></script>
+<script type="text/javascript" src="./assets/js/fontawesome.js"></script>
+<script type="text/javascript" src="./assets/js/vue.js"></script>
+<script type="text/javascript" src="./assets/js/moment.js"></script>
+<script type="text/javascript">
+	Vue.filter('limit', (str, length = 10) => {
+		return (str.substr(0, length) + (str.length > length? ' ...':''));
+	});
+	let vm = new Vue({
+		el: '#app',
+		data: {
+			todos: [{
+				name: 'House cleaning',
+				due: moment().add(1, 'days').format('MMMM Do YYYY'),
+				venue: 'Home'
+			}, {
+				name: 'ICT4Kids Program Open Day',
+				due: moment().format('MMMM Do YYYY'),
+				venue: 'Jongo Hub'
+			}, {
+				name: 'Build House Monetoring Car Robot',
+				due: moment().add(7, 'days').format('MMMM Do YYYY'),
+				venue: 'Closet'
+			}],
+			todo: {
+				name: '',
+				due: '',
+				venue: '',
+				done: false
+			},
+			showing: {},
+			m: moment
+		},
+		methods: {
+			createTodo() {
+				if (this.todo.name == '' || this.todo.due == '') return false;
+				this.todos.push(Object.assign({}, this.todo));
+				for (field in this.todo) {
+					this.todo[field] = ''
+				}
+				this.todo.done = false;
+			},
+			editTodo (index) {
+				this.todo = this.todos.splice(index, 1)[0];
+			},
+			markDone (index) {
+				this.todos[index].done = true;
+				if (this.todos[index].name === this.showing.name && this.todos[index].due === this.showing.due) {
+					this.showTodo(index);
+				}
+			},
+			deleteTodo (index) {
+				let remove = this.todos.splice(index, 1)[0];
+				if (remove.name === this.showing.name && remove.due === this.showing.due) {
+					this.showTodo(index);
+				}
+			},
+			showTodo (index) {
+				this.showing = Object.assign({}, this.todos[index]);
+			},
+			removeShowing () {
+				this.showing = {};
+			}
+		},
+		mounted () {
+			$('#app').show();
+			$('#dueDate').datepicker({
+				todayBtn: true,
+				startDate: '1d'
+			}).on ('changeDate', (d, a) => {
+				this.todo.due = moment(d.date).format('MMMM Do YYYY');
+			});
+			this.$refs.name.focus();
+		}
+	})
+</script>
+</body>
+</html>
