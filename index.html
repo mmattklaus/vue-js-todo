@@ -39,65 +39,134 @@
 </style>
 </head>
 <body>
-	<nav class="navbar navbar-dark bg-info">
-		<span class="navbar-brand mb-0 h1">Web | Todo</span>
-	</nav>
-	<div id="app" class="container animated bounceIn" style="padding-top: 45px; display: none;">
-		<div class="row">
-			<div class="col col-md-6" style="border-right: 3px solid black;">
-				<form>
-					<div class="form-group">
-						<label>Name </label>
-						<input type="text" v-model="todo.name" ref="name" class="form-control" placeholder="Enter descriptive name">
-					</div>
-					<div class="form-group">
-						<label>Due Date </label>
-						<input type="text" class="form-control" id="dueDate" v-model="todo.due">
-					</div>
-					<div class="form-group">
-						<label>Venue </label>
-						<input type="text" @keyup.enter="createTodo" class="form-control" v-model="todo.venue" placeholder="Enter venue (optional)">
-					</div>
-					<button type="button" class="btn btn-primary btn-block" @click="createTodo">Register Todo</button>
-				</form>
-			</div>
-			<div class="col col-md-6">
-				<div class="card">
-					<div class="card-body" v-if="showing.name">
-						<button class="btn-close" style="" @click="removeShowing">x</button>
-						<h5 class="card-title">{{ showing.name }} 
-							<i class="fa" :class="[showing.done? 'fa-check-circle':'fa-check-circle-o']"></i>
-						</h5>
-						<p class="card-text">@{{ showing.venue }} <code>{{ m(showing.due, 'MMMM Do YYYY').format('dddd') }} | {{ showing.due }}</code> | {{ m(showing.due, 'MMMM Do YYYY').endOf('day').fromNow() }} </p>
-					</div>
-					<ul class="list-group list-group-flush">
-						<transition-group name="custom-trans" :duration="1000" enter-active-class="animated slideInLeft"
-						leave-active-class="animated slideOutRight">
-						<li v-for="todo, index in todos" :key="index" class="list-group-item  d-flex justify-content-between align-items-center">
-							<span :class="[todo.done? 'strike':'not-strike']">
-								<span class="badge badge-info">{{ index + 1 }}.</span> 
-							{{ todo.name | limit(15) }}</span>
-							<span>
-								<button class="btn btn-danger btn-sm" @click="deleteTodo(index)"><i class="fa fa-trash"></i></button>
-								<button class="btn btn-warning btn-sm" @click="editTodo(index)"><i class="fa fa-edit"></i></button>
-								<button class="btn btn-info btn-sm" @click="showTodo(index)"><i class="fa fa-eye"></i></button>
-								<button class="btn btn-success btn-sm" :disabled="todo.done" @click="markDone(index)"><i class="fa fa-check"></i></button>
-							</span>
-						</li>
-					</transition-group>
-				</ul>
+	<div id="app">
+		<nav class="navbar navbar-dark bg-info fixed-top">
+			<span class="navbar-brand mb-0 h1">Web | Todo</span>
+			<sortable :todos="todos" @todos-sorted="sortedTodos"></sortable>
+		</nav>
+		<div ref="app" class="container animated bounceIn" style="padding-top: 90px; display: none;">
+			<div class="row">
+				<div class="col col-md-6" style="border-right: 3px solid black;">
+					<form>
+						<div class="form-group">
+							<label>Name </label>
+							<input type="text" v-model="todo.name" ref="name" class="form-control" placeholder="Enter descriptive name">
+						</div>
+						<div class="form-group">
+							<label>Due Date </label>
+							<input type="text" class="form-control" id="dueDate" v-model="todo.due">
+						</div>
+						<div class="form-group">
+							<label>Venue </label>
+							<input type="text" @keyup.enter="createTodo" class="form-control" v-model="todo.venue" placeholder="Enter venue (optional)">
+						</div>
+						<button type="button" class="btn btn-primary btn-block" @click="createTodo">Register Todo</button>
+					</form>
+				</div>
+				<div class="col col-md-6">
+					<div class="card">
+						<div class="card-body" v-if="showing.name">
+							<button class="btn-close" style="" @click="removeShowing">x</button>
+							<h5 class="card-title">{{ showing.name }} 
+								<i class="fa" :class="[showing.done? 'fa-check-circle':'fa-check-circle-o']"></i>
+							</h5>
+							<p class="card-text">@{{ showing.venue }} <code>{{ m(showing.due, 'MMMM Do YYYY').format('dddd') }} | {{ showing.due }}</code> | {{ m(showing.due, 'MMMM Do YYYY').endOf('day').fromNow() }} </p>
+						</div>
+						<ul class="list-group list-group-flush">
+							<transition-group name="custom-trans" :duration="1000" enter-active-class="animated slideInLeft"
+							leave-active-class="animated slideOutRight">
+							<li v-for="todo, index in todos" :key="index" class="list-group-item  d-flex justify-content-between align-items-center">
+								<span :class="[todo.done? 'strike':'not-strike']">
+									<span class="badge badge-info">{{ index + 1 }}.</span> 
+								{{ todo.name | limit(15) }}</span>
+								<span>
+									<button class="btn btn-danger btn-sm" @click="deleteTodo(index)"><i class="fa fa-trash"></i></button>
+									<button class="btn btn-warning btn-sm" @click="editTodo(index)"><i class="fa fa-edit"></i></button>
+									<button class="btn btn-info btn-sm" @click="showTodo(index)"><i class="fa fa-eye"></i></button>
+									<button class="btn btn-success btn-sm" :disabled="todo.done" @click="markDone(index)"><i class="fa fa-check"></i></button>
+								</span>
+							</li>
+						</transition-group>
+					</ul>
+				</div>
 			</div>
 		</div>
 	</div>
 </div>
+
+<script type="text/javascript" src="./assets/js/popper.min.js"></script>
 <script type="text/javascript" src="./assets/js/bootstrap.js"></script>
 <script type="text/javascript" src="./assets/js/bootstrap-datepicker.js"></script>
 <script type="text/javascript" src="./assets/js/fontawesome.js"></script>
 <script type="text/javascript" src="./assets/js/vue.js"></script>
 <script type="text/javascript" src="./assets/js/moment.js"></script>
+<script type="text/x-template" id="sortableTamplate">
+	<div class="btn-group">
+		<div class="btn-group dropleft" role="group">
+			<button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+				<span class="sr-only">Sort</span>
+			</button>
+			<div class="dropdown-menu">
+				<a class="dropdown-item" @click.prevent="sortItems('due')" :class="{active: type === 'due'}" href="#">Due <i class="fa fa-calendar-check-o pull-right"></i></a>
+				<a class="dropdown-item" @click.prevent="sortItems('created')" :class="{active: type === 'created'}" href="#">Created <i class="fa fa-calendar-o pull-right"></i></a>
+				<a class="dropdown-item" @click.prevent="sortItems('alpha')" :class="{active: type === 'alpha'}" href="#">A-Z <i class="fa fa-sort-alpha-desc pull-right"></i></a>
+				<div class="dropdown-divider"></div>
+				<a class="dropdown-item" @click.prevent="sortItems('done')" :class="{active: type === 'done'}" href="#">Done <i class="fa fa-check pull-right"></i></a>
+			</div>
+		</div>
+		<button type="button" class="btn btn-secondary" @click="sort = !sort">
+			Sort <i class="fa" :class="[sort? 'fa-sort-amount-asc':'fa-sort-amount-desc']"></i>
+		</button>
+	</div>
+</script>
 <script type="text/javascript">
 	Vue.filter('limit', (str, length = 10) => {
 		return (str.substr(0, length) + (str.length > length? ' ...':''));
+	});
+	Vue.component('sortable', {
+		props: {
+			todos: {
+				required: true,
+				type: Array
+			}
+		},
+		template: '#sortableTamplate',
+		data () {
+			return {
+				sort: 1,
+				type: 'created',
+				clone: Object.assign([], this.todos)
+			}
+		},
+		watch: {
+			sort (value) {
+				this.clone.reverse();
+				this.$emit('todos-sorted', this.clone);
+			}
+		},
+		computed: {},
+		methods: {
+			sortItems (type) {
+				this.type = type;
+				if (type === 'due') {
+					this.clone.sort(function (a, b) {
+						if (moment(a.due, 'MMMM Do YYYY').diff(moment(b.due, 'MMMM Do YYYY'), 'milliseconds') < 0) {
+							return -1;
+						}
+						if (moment(a.due, 'MMMM Do YYYY').diff(moment(b.due, 'MMMM Do YYYY'), 'milliseconds') > 0) {
+							return 1;
+						}
+						return 0;
+					});
+					if (!this.sort) {
+						this.clone.reverse();
+					}
+				}
+				this.$emit('todos-sorted', this.clone);
+			} 
+		},
+		mounted () {
+		}
 	});
 	let vm = new Vue({
 		el: '#app',
@@ -153,10 +222,13 @@
 			},
 			removeShowing () {
 				this.showing = {};
+			},
+			sortedTodos (todos) {
+				this.todos = todos;
 			}
 		},
 		mounted () {
-			$('#app').show();
+			$(this.$refs.app).show();
 			$('#dueDate').datepicker({
 				todayBtn: true,
 				startDate: '1d'
