@@ -36,6 +36,22 @@
 		vertical-align: top;
 		width: 20px;
 	}
+	.list-complete-item {
+		transition: all 1s;
+		display: inline-block;
+		margin-right: 10px;
+	}
+	.list-complete-enter, .list-complete-leave-to
+	/* .list-complete-leave-active below version 2.1.8 */ {
+		opacity: 0;
+		transform: translateY(30px);
+	}
+	.list-complete-leave-active {
+		position: absolute;
+	}
+	.list-complete-move {
+		transition: transform 1s;
+	}
 </style>
 </head>
 <body>
@@ -73,9 +89,9 @@
 							<p class="card-text">@{{ showing.venue }} <code>{{ m(showing.due, 'MMMM Do YYYY').format('dddd') }} | {{ showing.due }}</code> | {{ m(showing.due, 'MMMM Do YYYY').endOf('day').fromNow() }} </p>
 						</div>
 						<ul class="list-group list-group-flush">
-							<transition-group name="custom-trans" :duration="1000" enter-active-class="animated slideInLeft"
+							<transition-group name="list-complete" :duration="1000" enter-active-class="animated slideInLeft"
 							leave-active-class="animated slideOutRight">
-							<li v-for="todo, index in todos" :key="index" class="list-group-item  d-flex justify-content-between align-items-center">
+							<li v-for="todo, index in todos" :key="todo.name" class="list-group-item  d-flex justify-content-between align-items-center list-complete-item">
 								<span :class="[todo.done? 'strike':'not-strike']">
 									<span class="badge badge-info">{{ index + 1 }}.</span> 
 								{{ todo.name | limit(15) }}</span>
