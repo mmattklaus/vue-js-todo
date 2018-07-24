@@ -1,59 +1,16 @@
 <!DOCTYPE html>
 <html>
+
 <head>
 	<title>Web | Todo</title>
 	<link rel="stylesheet" type="text/css" href="./assets/css/bootstrap.css">
 	<link rel="stylesheet" type="text/css" href="./assets/css/bootstrap-datepicker.css">
 	<link rel="stylesheet" type="text/css" href="./assets/css/font-awesome.css">
 	<link rel="stylesheet" type="text/css" href="./assets/css/animate.css">
-	<script type="text/javascript" src="./assets/js/jquery.js"></script>
-	<style type="text/css">
-	.strike {
-		text-decoration: line-through;
-	}
-	.btn-close:before {
-		content: '\00a2'
-	}
-	.btn-close {
-		position: absolute;
-		right: .5rem;
-		top: .5rem;-webkit-appearance: none;
-		background-color: rgba(10,10,10,.2);
-		border: none;
-		border-radius: 290486px;
-		cursor: pointer;
-		pointer-events: auto;
-		display: inline-block;
-		flex-grow: 0;
-		flex-shrink: 0;
-		font-size: 0;
-		height: 20px;
-		max-height: 20px;
-		max-width: 20px;
-		min-height: 20px;
-		min-width: 20px;
-		outline: 0;
-		vertical-align: top;
-		width: 20px;
-	}
-	.list-complete-item {
-		transition: all 1s;
-		display: inline-block;
-		margin-right: 10px;
-	}
-	.list-complete-enter, .list-complete-leave-to
-	/* .list-complete-leave-active below version 2.1.8 */ {
-		opacity: 0;
-		transform: translateY(30px);
-	}
-	.list-complete-leave-active {
-		position: absolute;
-	}
-	.list-complete-move {
-		transition: transform 1s;
-	}
-</style>
+	<link rel="stylesheet" type="text/css" href="./assets/css/app.css">
+	<link rel="stylesheet" type="text/css" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
 </head>
+
 <body>
 	<div id="app">
 		<nav class="navbar navbar-dark bg-info fixed-top">
@@ -70,190 +27,323 @@
 						</div>
 						<div class="form-group">
 							<label>Due Date </label>
-							<input type="text" class="form-control" id="dueDate" v-model="todo.due">
+							<el-date-picker v-model="todo.due" type="datetimerange" class="full-width" start-placeholder="Start Date" end-placeholder="End Date"
+							    :default-time="['12:00:00']">
+							</el-date-picker>
 						</div>
 						<div class="form-group">
 							<label>Venue </label>
 							<input type="text" @keyup.enter="createTodo" class="form-control" v-model="todo.venue" placeholder="Enter venue (optional)">
 						</div>
-						<button type="button" class="btn btn-primary btn-block" @click="createTodo">Register Todo</button>
+						<button type="button" class="btn btn-primary btn-block" @click="validateTodo" v-html="buttonText"></button>
 					</form>
-				</div>
-				<div class="col col-md-6">
-					<div class="card">
-						<div class="card-body" v-if="showing.name">
-							<button class="btn-close" style="" @click="removeShowing">x</button>
-							<h5 class="card-title">{{ showing.name }} 
-								<i class="fa" :class="[showing.done? 'fa-check-circle':'fa-check-circle-o']"></i>
-							</h5>
-							<p class="card-text">@{{ showing.venue }} <code>{{ m(showing.due, 'MMMM Do YYYY').format('dddd') }} | {{ showing.due }}</code> | {{ m(showing.due, 'MMMM Do YYYY').endOf('day').fromNow() }} </p>
-						</div>
-						<ul class="list-group list-group-flush">
-							<transition-group name="list-complete" :duration="1000" enter-active-class="animated slideInLeft"
-							leave-active-class="animated slideOutRight">
-							<li v-for="todo, index in todos" :key="todo.name" class="list-group-item  d-flex justify-content-between align-items-center list-complete-item">
-								<span :class="[todo.done? 'strike':'not-strike']">
-									<span class="badge badge-info">{{ index + 1 }}.</span> 
-								{{ todo.name | limit(15) }}</span>
-								<span>
-									<button class="btn btn-danger btn-sm" @click="deleteTodo(index)"><i class="fa fa-trash"></i></button>
-									<button class="btn btn-warning btn-sm" @click="editTodo(index)"><i class="fa fa-edit"></i></button>
-									<button class="btn btn-info btn-sm" @click="showTodo(index)"><i class="fa fa-eye"></i></button>
-									<button class="btn btn-success btn-sm" :disabled="todo.done" @click="markDone(index)"><i class="fa fa-check"></i></button>
+					<div v-if="showing._id" class="col-md-12 animated animated-fade" style="margin-top: 15px; padding-top: 15px; border-top: 2px solid black;">
+						<button class="btn-close" @click="removeShowing">x</button>
+						<el-card class="box-card">
+							<div slot="header" class="clearfix">
+								<span>@ {{ showing.venue }} | {{ m(showing.end).endOf('day').fromNow() }}</span>
+								<el-button @click="markDone(showing._id)" :disabled="showing.due" style="float: right;" size="mini" type="success" icon="el-icon-check">
+									Done
+								</el-button>
+							</div>
+							<div class="text item">
+								<div>{{ m(showing.start).format("MMMM Do YYYY") }}
+									<code>to</code> {{ m(showing.end).format("MMMM Do YYYY") }}</div>
+								<div>{{ showing.name }}</div>
+							</div>
+						</el-card>
+						<div class="el-card__header">
+							<div class="clearfix">
+								<span class="pull-left">
+									<i class="el-icon-date"></i> {{ m(showing.created).format("MMMM Do YYYY") }}
 								</span>
-							</li>
-						</transition-group>
-					</ul>
+								<span class="pull-right">
+									<i class="el-icon-edit"></i> {{ m(showing.updated).format("MMMM Do YYYY") }}
+								</span>
+							</div>
+						</div>
+					</div>
+
+				</div>
+				<div class="col col-md-6 scrollbar" style="max-height: 85vh; overflow-y: auto;"  id="style-15">
+					<div class="card">
+						<ul class="list-group list-group-flush">
+							<transition-group name="list-complete" :duration="1000" enter-active-class="animated slideInLeft" leave-active-class="animated slideOutRight">
+								<li v-for="todo, index in todos" :key="todo._id" class="list-group-item  d-flex justify-content-between align-items-center list-complete-item">
+									<span :class="[todo.due? 'strike':'not-strike']">
+										<span class="badge badge-info">{{ index + 1 }}.</span> {{ todo.name | limit(30) }}</span>
+									<span class="btn-group">
+										<button class="btn btn-danger btn-sm" @click="deleteTodo(index, todo._id)">
+											<i class="fa fa-trash"></i>
+										</button>
+										<button class="btn btn-warning btn-sm" @click="editTodo(index)">
+											<i class="fa fa-edit"></i>
+										</button>
+										<button class="btn btn-info btn-sm" @click="showTodo(index)">
+											<i class="fa fa-eye"></i>
+										</button>
+										<button class="btn btn-success btn-sm" :disabled="todo.due" @click="markDone(todo._id)">
+											<i class="fa fa-check"></i>
+										</button>
+									</span>
+								</li>
+							</transition-group>
+						</ul>
+					</div>
 				</div>
 			</div>
 		</div>
 	</div>
-</div>
-
-<script type="text/javascript" src="./assets/js/popper.min.js"></script>
-<script type="text/javascript" src="./assets/js/bootstrap.js"></script>
-<script type="text/javascript" src="./assets/js/bootstrap-datepicker.js"></script>
-<script type="text/javascript" src="./assets/js/fontawesome.js"></script>
-<script type="text/javascript" src="./assets/js/vue.js"></script>
-<script type="text/javascript" src="./assets/js/moment.js"></script>
-<script type="text/x-template" id="sortableTamplate">
-	<div class="btn-group">
-		<div class="btn-group dropleft" role="group">
-			<button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-				<span class="sr-only">Sort</span>
-			</button>
-			<div class="dropdown-menu">
-				<a class="dropdown-item" @click.prevent="sortItems('due')" :class="{active: type === 'due'}" href="#">Due <i class="fa fa-calendar-check-o pull-right"></i></a>
-				<a class="dropdown-item" @click.prevent="sortItems('created')" :class="{active: type === 'created'}" href="#">Created <i class="fa fa-calendar-o pull-right"></i></a>
-				<a class="dropdown-item" @click.prevent="sortItems('alpha')" :class="{active: type === 'alpha'}" href="#">A-Z <i class="fa fa-sort-alpha-desc pull-right"></i></a>
-				<div class="dropdown-divider"></div>
-				<a class="dropdown-item" @click.prevent="sortItems('done')" :class="{active: type === 'done'}" href="#">Done <i class="fa fa-check pull-right"></i></a>
+	<script type="text/x-template" id="sortableTamplate">
+		<div class="btn-group">
+			<div class="btn-group dropleft" role="group">
+				<button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true"
+				    aria-expanded="false">
+					<span class="sr-only">Sort</span>
+				</button>
+				<div class="dropdown-menu">
+					<a class="dropdown-item" @click.prevent="sortItems('due')" :class="{active: type === 'due'}" href="#">Due
+						<i class="fa fa-calendar-check-o pull-right"></i>
+					</a>
+					<a class="dropdown-item" @click.prevent="sortItems('created')" :class="{active: type === 'created'}" href="#">Created
+						<i class="fa fa-calendar-o pull-right"></i>
+					</a>
+					<a class="dropdown-item" @click.prevent="sortItems('alpha')" :class="{active: type === 'alpha'}" href="#">A-Z
+						<i class="fa fa-sort-alpha-desc pull-right"></i>
+					</a>
+					<div class="dropdown-divider"></div>
+					<a class="dropdown-item" @click.prevent="sortItems('done')" :class="{active: type === 'done'}" href="#">Done
+						<i class="fa fa-check pull-right"></i>
+					</a>
+				</div>
 			</div>
+			<button type="button" class="btn btn-secondary" @click="sort = !sort">
+				Sort
+				<i class="fa" :class="[sort? 'fa-sort-amount-asc':'fa-sort-amount-desc']"></i>
+			</button>
 		</div>
-		<button type="button" class="btn btn-secondary" @click="sort = !sort">
-			Sort <i class="fa" :class="[sort? 'fa-sort-amount-asc':'fa-sort-amount-desc']"></i>
-		</button>
-	</div>
-</script>
-<script type="text/javascript">
-	Vue.filter('limit', (str, length = 10) => {
-		return (str.substr(0, length) + (str.length > length? ' ...':''));
-	});
-	Vue.component('sortable', {
-		props: {
-			todos: {
-				required: true,
-				type: Array
-			}
-		},
-		template: '#sortableTamplate',
-		data () {
-			return {
-				sort: 1,
-				type: 'created',
-				clone: Object.assign([], this.todos)
-			}
-		},
-		watch: {
-			sort (value) {
-				this.clone.reverse();
-				this.$emit('todos-sorted', this.clone);
-			}
-		},
-		computed: {},
-		methods: {
-			sortItems (type) {
-				this.type = type;
-				if (type === 'due') {
-					this.clone.sort(function (a, b) {
-						if (moment(a.due, 'MMMM Do YYYY').diff(moment(b.due, 'MMMM Do YYYY'), 'milliseconds') < 0) {
-							return -1;
+	</script>
+	<script type="text/javascript" src="./assets/js/jquery.js"></script>
+	<script type="text/javascript" src="./assets/js/popper.min.js"></script>
+	<script type="text/javascript" src="./assets/js/bootstrap.js"></script>
+	<script type="text/javascript" src="./assets/js/bootstrap-datepicker.js"></script>
+	<script type="text/javascript" src="./assets/js/fontawesome.js"></script>
+	<script type="text/javascript" src="./assets/js/vue.js"></script>
+	<script type="text/javascript" src="./assets/js/moment.js"></script>
+	<script type="text/javascript" src="./assets/js/axios.min.js"></script>
+	<script type="text/javascript" src="./assets/js/element-ui.min.js"></script>
+	<script type="text/javascript" src="./assets/js/element-ui-local-en.js"></script>
+	<script>
+		ELEMENT.locale(ELEMENT.lang.en)
+	</script>
+	<script type="text/javascript">
+		Vue.prototype.http = axios
+		axios.defaults.baseUrl = 'http://localhost:3000';
+		Vue.filter('limit', (str, length = 25) => {
+			return (str.substr(0, length) + (str.length > length ? ' ...' : ''));
+		});
+		Vue.component('sortable', {
+			props: {
+				todos: {
+					required: true,
+					type: Array
+				}
+			},
+			template: '#sortableTamplate',
+			data() {
+				return {
+					sort: 1,
+					type: 'created',
+					clone: Object.assign([], this.todos)
+				}
+			},
+			watch: {
+				sort(value) {
+					this.clone.reverse();
+					this.$emit('todos-sorted', this.clone);
+				}
+			},
+			computed: {},
+			methods: {
+				sortItems(type) {
+					this.type = type;
+					if (type === 'due') {
+						this.clone.sort(function (a, b) {
+							if (moment(a.due, 'MMMM Do YYYY').diff(moment(b.due, 'MMMM Do YYYY'), 'milliseconds') < 0) {
+								return -1;
+							}
+							if (moment(a.due, 'MMMM Do YYYY').diff(moment(b.due, 'MMMM Do YYYY'), 'milliseconds') > 0) {
+								return 1;
+							}
+							return 0;
+						});
+						if (!this.sort) {
+							this.clone.reverse();
 						}
-						if (moment(a.due, 'MMMM Do YYYY').diff(moment(b.due, 'MMMM Do YYYY'), 'milliseconds') > 0) {
-							return 1;
-						}
-						return 0;
-					});
-					if (!this.sort) {
-						this.clone.reverse();
 					}
-				}
-				this.$emit('todos-sorted', this.clone);
-			} 
-		},
-		mounted () {
-		}
-	});
-	let vm = new Vue({
-		el: '#app',
-		data: {
-			todos: [{
-				name: 'House cleaning',
-				due: moment().add(1, 'days').format('MMMM Do YYYY'),
-				venue: 'Home'
-			}, {
-				name: 'ICT4Kids Program Open Day',
-				due: moment().format('MMMM Do YYYY'),
-				venue: 'Jongo Hub'
-			}, {
-				name: 'Build House Monetoring Car Robot',
-				due: moment().add(7, 'days').format('MMMM Do YYYY'),
-				venue: 'Closet'
-			}],
-			todo: {
-				name: '',
-				due: '',
-				venue: '',
-				done: false
-			},
-			showing: {},
-			m: moment
-		},
-		methods: {
-			createTodo() {
-				if (this.todo.name == '' || this.todo.due == '') return false;
-				this.todos.push(Object.assign({}, this.todo));
-				for (field in this.todo) {
-					this.todo[field] = ''
-				}
-				this.todo.done = false;
-			},
-			editTodo (index) {
-				this.todo = this.todos.splice(index, 1)[0];
-			},
-			markDone (index) {
-				this.todos[index].done = true;
-				if (this.todos[index].name === this.showing.name && this.todos[index].due === this.showing.due) {
-					this.showTodo(index);
+					this.$emit('todos-sorted', this.clone);
 				}
 			},
-			deleteTodo (index) {
-				let remove = this.todos.splice(index, 1)[0];
-				if (remove.name === this.showing.name && remove.due === this.showing.due) {
-					this.showTodo(index);
+			mounted() {}
+		});
+		let vm = new Vue({
+			el: '#app',
+			data: {
+				todos: [],
+				todo: {
+					name: 'Create an awesome Vue.js App',
+					due: [],
+					venue: 'Current Location',
+					done: false
+				},
+				editing: false,
+				showing: {},
+				m: moment,
+				buttonText: "Register Todo"
+			},
+			watch: {
+				todo(value) {
+					this.buttonText = (value.id && value.id.length > 0) ? "Update Todo" : "Register Todo";
 				}
 			},
-			showTodo (index) {
-				this.showing = Object.assign({}, this.todos[index]);
+			methods: {
+				getTodos() {
+					axios.get('http://localhost:3000/todos')
+						.then(res => {
+							this.todos = res.data;
+						})
+				},
+				validateTodo() {
+					if (!this.todo.name || !this.todo.due.length) {
+						this.$notify.warning({
+							title: "",
+							message: "Please both name and due dates are required"
+						});
+						return false;
+					}
+
+					if (this.todo.id && this.todo.id.length) {
+						this.updateTodo(this.todo.id);
+					} else {
+						this.createTodo();
+					}
+					return false;
+				},
+				createTodo() {
+					// this.todos.push(Object.assign({}, this.todo));
+					axios.post('http://localhost:3000/todo', Object.assign(this.todo))
+						.then(res => {
+							let data = res.data;
+							if (data.status === 'success') {
+								this.$notify.success({
+									title: 'Success',
+									message: "Todo saved successfully"
+								});
+								this.todos.push(data.todo);
+								this.todo = {};
+							}
+						});
+				},
+				editTodo(index) {
+					let item = this.todos[index];
+					this.todo = {
+						name: item.name,
+						due: [item.start, item.end],
+						venue: item.venue,
+						done: item.due,
+						id: item._id
+					};
+					this.$refs.name.focus();
+					return false;
+				},
+				updateTodo(id) {
+					axios.post(`http://localhost:3000/todo/update/${id}`, Object.assign(this.todo))
+						.then(res => {
+							let data = res.data;
+							if (data.status === 'success') {
+								this.$notify.success({
+									title: 'Success',
+									message: data.message
+								});
+								let index = this.todos.indexOf(this.todos.find(todo => todo._id == data.todo._id));
+								this.todos.splice(index, 1, data.todo);
+								this.todo = {};
+							} else {
+								this.$notify.error({
+									title: 'Error',
+									message: data.message
+								});
+							}
+						})
+				},
+				markDone(id) {
+					let todo = this.todos.find(t => t._id === id);
+					let index = this.todos.indexOf(todo);
+					axios.post(`http://localhost:3000/todo/done/${id}`)
+						.then(res => {
+							let data = res.data;
+							if (data.status === 'success') {
+								this.$notify.success({
+									title: 'Success',
+									message: data.message
+								});
+								this.todos.splice(index, 1, data.todo);
+								if (this.showing._id == todo._id) {
+									this.showing = data.todo;
+								}
+							} else {
+								this.$notify.error({
+									title: 'Error',
+									message: data.message
+								});
+							}
+						})
+
+				},
+				deleteTodo(index, id) {
+					console.log(id)
+					axios.post('http://localhost:3000/todo/delete', {
+							id: id
+						})
+						.then(res => {
+							let data = res.data;
+							if (data.status === 'success') {
+								let remove = this.todos.splice(index, 1)[0];
+								this.$notify.success({
+									title: "Success!",
+									message: data.message
+								});
+							} else {
+								this.$notify.warning({
+									title: 'Warning!',
+									message: data.message
+								});
+							}
+						})
+				},
+				showTodo(index) {
+					this.showing = this.todos[index];
+				},
+				removeShowing() {
+					this.showing = {};
+				},
+				sortedTodos(todos) {
+					this.todos = todos;
+				}
 			},
-			removeShowing () {
-				this.showing = {};
-			},
-			sortedTodos (todos) {
-				this.todos = todos;
+			mounted() {
+				$(this.$refs.app).show();
+				$('#dueDate').datepicker({
+					todayBtn: true,
+					startDate: '1d'
+				}).on('changeDate', (d, a) => {
+					this.todo.due = moment(d.date).format('MMMM Do YYYY');
+				});
+				this.$refs.name.focus();
+				this.getTodos();
 			}
-		},
-		mounted () {
-			$(this.$refs.app).show();
-			$('#dueDate').datepicker({
-				todayBtn: true,
-				startDate: '1d'
-			}).on ('changeDate', (d, a) => {
-				this.todo.due = moment(d.date).format('MMMM Do YYYY');
-			});
-			this.$refs.name.focus();
-		}
-	})
-</script>
+		})
+	</script>
 </body>
+
 </html>
