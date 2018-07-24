@@ -33,10 +33,10 @@ A big thanks to [Rodriq](https://github.com/Rodriq) for the inspiration.
                 fonts/
             node_modules/
             server/
-            	server.js
+                server.js
             index.html
             package.json
             README.md
-			yarn.lock
+            yarn.lock
 
 #### With &nbsp; :heart: &nbsp; MK
